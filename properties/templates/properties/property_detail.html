@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+  <!-- Property Title -->
+    <h2 class="mb-4">{{ property.title }}</h2>
+
+    <!-- Featured Image -->
+    {% if property.images.all %}
+    <div id="propertyCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+    <div class="carousel-inner">
+        {% for image in property.images.all %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+        <img src="{{ image.image.url }}" class="d-block w-100 rounded" style="max-height: 450px; object-fit: cover;" alt="Property image {{ forloop.counter }}">
+        </div>
+        {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+
+        <div class="carousel-indicators">
+        {% for image in property.images.all %}
+            <button type="button" data-bs-target="#propertyCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
+            {% if forloop.first %}class="active" aria-current="true"{% endif %} aria-label="Slide {{ forloop.counter }}">
+            </button>
+        {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Property Info & Description -->
+    <div class="row">
+        <div class="col-md-8">
+        <h4 class="text-muted">Description</h4>
+        <p>{{ property.description }}</p>
+
+        <h4 class="text-muted mt-4">Property Information</h4>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item"><strong>Type:</strong> {{ property.get_property_type_display }}</li>
+            <li class="list-group-item"><strong>Location:</strong> {{ property.location }}</li>
+            <li class="list-group-item"><strong>Price:</strong> ₦{{ property.price|floatformat:0 }}</li>
+            <li class="list-group-item"><strong>Available:</strong> {{ property.is_available|yesno:"Yes,No" }}</li>
+            <li class="list-group-item"><strong>Posted:</strong> {{ property.created_at|date:"F d, Y" }}</li>
+        </ul>
+
+        <!-- Contact Button -->
+        {% if user.is_authenticated and user != property.owner %}
+        <a href="#" class="btn btn-success mt-4">Contact Owner</a>
+        {% endif %}
+        </div>
+
+        <!-- Image Gallery -->
+        <div class="col-md-4">
+        <h5 class="mb-3">Gallery</h5>
+        <div class="row row-cols-2 g-2">
+            {% for img in property.images.all %}
+            <div class="col">
+            <img src="{{ img.image.url }}" class="img-fluid rounded" alt="Property image">
+            </div>
+            {% endfor %}
+        </div>
+        </div>
+    </div>
+
+    {% if request.user == property.owner %}
+        <div class="mb-3">
+            <a href="{% url 'edit_property' property.pk %}" class="btn btn-outline-secondary">Edit Property</a>
+
+            <form action="{% url 'delete_property' property.pk %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this property?');">Delete</button>
+            </form>
+        </div>
+   {% endif %}
+
+
+    <hr class="my-5">
+
+    <h4>Comments</h4>
+
+    <!-- Comment Form -->
+    {% if user.is_authenticated %}
+    <form id="commentForm" method="post" action="{% url 'add_comment' property.pk %}">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <button type="submit" class="btn btn-primary">Post Comment</button>
+    </form>
+    {% else %}
+    <p><a href="{% url 'login' %}">Log in</a> to post a comment.</p>
+    {% endif %}
+
+    <!-- Comments Container -->
+    <div id="commentList" class="mt-4">
+    {% for comment in comments %}
+        {% include 'properties/includes/comment_single.html' with comment=comment %}
+    {% empty %}
+        <p>No comments yet. Be the first to comment!</p>
+    {% endfor %}
+    </div>
+
+
+
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function () {
+    $('#commentForm').submit(function (e) {
+      e.preventDefault();
+
+      const $form = $(this);
+      const url = $form.attr('action');
+      const data = $form.serialize();
+
+      $.post(url, data, function (response) {
+        if (response.success) {
+          $('#commentList').prepend(response.comment_html);
+          $form[0].reset();  // clear form
+        } else {
+          alert("You cannot post more than 1 comment per property.");
+        }
+      });
+    });
+  });
+</script>
+<script>
+$(document).ready(function() {
+  // Delete comment
+  $('.delete-comment').click(function () {
+    const id = $(this).data('id');
+    if (confirm('Delete this comment?')) {
+      $.post(`/comment/${id}/delete/`, {
+        'csrfmiddlewaretoken': '{{ csrf_token }}'
+      }, function (response) {
+        if (response.success) {
+          $(`#comment-${id}`).remove();
+        }
+      });
+    }
+  });
+
+  // Edit comment (inline)
+  $('.edit-comment').click(function () {
+    const id = $(this).data('id');
+    const content = $(this).data('content');
+    const newContent = prompt('Edit your comment:', content);
+
+    if (newContent && newContent !== content) {
+      $.post(`/comment/${id}/edit/`, {
+        'csrfmiddlewaretoken': '{{ csrf_token }}',
+        'content': newContent
+      }, function (response) {
+        if (response.success) {
+          $(`#comment-text-${id}`).text(response.updated_text);
+        }
+      });
+    }
+  });
+});
+</script>
+
+{% endblock %}
+

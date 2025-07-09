@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Available Properties</h2>
+
+<div class="row">
+
+  <form method="get" action="." class="row g-3 mb-5">
+  <div class="col-md-4">
+    <input type="text" name="q" class="form-control" placeholder="Search by location or title"
+           value="{{ request.GET.q }}">
+  </div>
+  <div class="col-md-3">
+    <input type="number" name="max_price" class="form-control" placeholder="Max price"
+           value="{{ request.GET.max_price }}">
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-primary w-100">Search</button>
+  </div>
+</form>
+
+  {% for property in properties %}
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        {% if property.images.all %}
+          <img src="{{ property.images.first.image.url }}" class="card-img-top" alt="Property image">
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ property.title }}</h5>
+          <p class="card-text">{{ property.location }}<br>₦{{ property.price|floatformat:0 }}</p>
+          <a href="{% url 'property_detail' property.pk %}" class="btn btn-primary">View Details</a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p>No properties listed yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

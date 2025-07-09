@@ -1,0 +1,14 @@
+<div class="mb-3 p-3 bg-light rounded" id="comment-{{ comment.id }}">
+  <div class="d-flex justify-content-between">
+    <strong>{{ comment.user.username }}</strong>
+    <small class="text-muted">{{ comment.created_at|date:"M d, Y H:i" }}</small>
+  </div>
+  <p class="mb-1" id="comment-text-{{ comment.id }}">{{ comment.content }}</p>
+
+  {% if comment.user == request.user %}
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-secondary edit-comment" data-id="{{ comment.id }}" data-content="{{ comment.content }}">Edit</button>
+      <button class="btn btn-sm btn-outline-danger delete-comment" data-id="{{ comment.id }}">Delete</button>
+    </div>
+  {% endif %}
+</div>
