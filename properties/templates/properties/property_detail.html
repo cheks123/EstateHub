@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block content %}
 <div class="container">
@@ -45,7 +46,7 @@
         <ul class="list-group list-group-flush">
             <li class="list-group-item"><strong>Type:</strong> {{ property.get_property_type_display }}</li>
             <li class="list-group-item"><strong>Location:</strong> {{ property.location }}</li>
-            <li class="list-group-item"><strong>Price:</strong> ₦{{ property.price|floatformat:0 }}</li>
+            <li class="list-group-item"><strong>Price:</strong> ₦{{ property.price|floatformat:0 | intcomma }}</li>
             <li class="list-group-item"><strong>Available:</strong> {{ property.is_available|yesno:"Yes,No" }}</li>
             <li class="list-group-item"><strong>Posted:</strong> {{ property.created_at|date:"F d, Y" }}</li>
         </ul>
@@ -60,11 +61,28 @@
         <div class="col-md-4">
         <h5 class="mb-3">Gallery</h5>
         <div class="row row-cols-2 g-2">
-            {% for img in property.images.all %}
-            <div class="col">
-            <img src="{{ img.image.url }}" class="img-fluid rounded" alt="Property image">
-            </div>
+           
+
+            {% for image in property.images.all %}
+              <div>
+                <img src="{{ image.image.url }}" alt="Property Image" class="img-fluid rounded mb-2" style="max-height: 150px; object-fit: cover;">
+                {% if user == property.owner %}
+                  <div class="d-flex gap-2">
+                    <a href="{% url 'update_property_image' image_id=image.id %}" class="btn btn-sm btn-outline-primary">Update</a>
+                    <a href="{% url 'delete_property_image' image_id=image.id %}" 
+                      class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('Are you sure you want to delete this image?');">Delete</a>
+                  </div>
+                {% endif %}
+              </div>
+            {% empty %}
+              <p>No images available.</p>
             {% endfor %}
+
+            {% if user == property.owner and property.images.count < 3 %}
+              <a href="{% url 'add_property_image' pk=property.id %}">Add New Image</a>
+            {% endif %}
+
         </div>
         </div>
     </div>
@@ -79,6 +97,23 @@
             </form>
         </div>
    {% endif %}
+
+     <hr class="my-5">
+
+   {% if user.is_authenticated and property.owner != user %}
+  <div class="card mt-4">
+    <div class="card-header">Contact Property Owner</div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        {{ message_form.as_p }}
+        <button type="submit" name="send_message" class="btn btn-primary">Send Message</button>
+      </form>
+    </div>
+  </div>
+{% elif not user.is_authenticated %}
+  <p><a href="{% url 'login' %}">Log in</a> to contact the property owner.</p>
+{% endif %}
 
 
     <hr class="my-5">

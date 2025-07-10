@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<p>Phone: {{ user_info.profile.phone_number }}</p>
+<p>Gender: {{ user_info.profile.gender }}</p>
+<p>Bio: {{ user_info.profile.bio }}</p>
+
+{% if user_info.profile.profile_pic %}
+  <img src="{{ user_info.profile.profile_pic.url }}" style="width: 100px; height: 100px; object-fit: cover;" class="rounded-circle">
+{% endif %}
+
+<div class="container my-4">
+  <h2>Hello, {{ user_info.get_full_name|default:user_info.username }} 👋</h2>
+  <p>Email: {{ user_info.email }}</p>
+  <p>Username: {{ user_info.username }}</p>
+  <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary mb-3">Edit Profile</a>
+
+  <hr>
+
+  <h4 class="mt-4">Your Listed Properties</h4>
+  {% if properties %}
+    <div class="row">
+      {% for prop in properties %}
+        <div class="col-md-4 mb-4">
+          <div class="card shadow">
+            {% if prop.images.first %}
+              <img src="{{ prop.images.first.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">{{ prop.title }}</h5>
+              <p class="card-text">{{ prop.location }}</p>
+              <p class="card-text fw-bold text-success">₦{{ prop.price|floatformat:0 }}</p>
+              <a href="{% url 'property_detail' prop.pk %}" class="btn btn-sm btn-primary">View</a>
+              <a href="{% url 'edit_property' prop.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">You haven't listed any properties yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

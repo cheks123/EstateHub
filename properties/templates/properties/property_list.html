@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+{% load humanize %}
 <h2>Available Properties</h2>
 
 <div class="row">
@@ -26,7 +27,7 @@
         {% endif %}
         <div class="card-body">
           <h5 class="card-title">{{ property.title }}</h5>
-          <p class="card-text">{{ property.location }}<br>₦{{ property.price|floatformat:0 }}</p>
+          <p class="card-text">{{ property.location }}<br>₦{{ property.price|floatformat:0|intcomma }}</p>
           <a href="{% url 'property_detail' property.pk %}" class="btn btn-primary">View Details</a>
         </div>
       </div>

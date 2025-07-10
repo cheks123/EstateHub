@@ -9,6 +9,8 @@ from django.views.decorators.http import require_POST
 from django.template.loader import render_to_string
 from django.db.models import Q
 from django.contrib import messages
+from .forms import MessageForm
+
 
 # Create your views here.
 
@@ -188,3 +190,123 @@ def delete_property(request, pk):
     property.delete()
     messages.success(request, "Property deleted successfully.")
     return redirect('property_list')
+
+
+
+
+def property_detail(request, pk):
+    property = get_object_or_404(Property, pk=pk)
+    comments = property.comments.all()
+
+    # Messaging
+    message_form = None
+    if request.user.is_authenticated and request.user != property.owner:
+        message_form = MessageForm()
+
+        if request.method == 'POST' and 'send_message' in request.POST:
+            message_form = MessageForm(request.POST)
+            if message_form.is_valid():
+                message = message_form.save(commit=False)
+                message.sender = request.user
+                message.recipient = property.owner
+                message.property = property
+                message.save()
+                messages.success(request, "Message sent to the property owner.")
+                return redirect('property_detail', pk=pk)
+
+    return render(request, 'properties/property_detail.html', {
+        'property': property,
+        'comments': comments,
+        'message_form': message_form,
+    })
+
+
+
+#Grok implementation for deleting a property image
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Property, PropertyImage
+
+@login_required
+def delete_property_image(request, image_id):
+    image = get_object_or_404(PropertyImage, id=image_id)
+    property = image.property
+    
+    # Check if the user owns the property
+    if property.owner != request.user:
+        messages.error(request, "You are not authorized to delete this image.")
+        return redirect('property_detail', property_id=property.id)
+    
+    image.delete()
+    messages.success(request, "Image deleted successfully.")
+    return redirect('property_detail', property_id=property.id)
+
+
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .forms import PropertyImageForm  # You'll create this form next
+
+@login_required
+def update_property_image(request, image_id):
+    image = get_object_or_404(PropertyImage, id=image_id)
+    property = image.property
+    
+    # Check if the user owns the property
+    if property.owner != request.user:
+        messages.error(request, "You are not authorized to update this image.")
+        return redirect('property_detail', property_id=property.id)
+    
+    if request.method == 'POST':
+        form = PropertyImageForm(request.POST, request.FILES, instance=image)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Image updated successfully.")
+            return redirect('property_detail', pk=property.id)
+    else:
+        form = PropertyImageForm(instance=image)
+    
+    return render(request, 'properties/update_property_image.html', {
+        'form': form,
+        'property': property,
+        'image': image
+    })
+
+# properties/views.py
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Property, PropertyImage
+from .forms import PropertyImageForm
+
+@login_required
+def add_property_image(request, pk):
+    property = get_object_or_404(Property, id=pk)
+    
+    # Check if the user owns the property
+    if property.owner != request.user:
+        messages.error(request, "You are not authorized to add images to this property.")
+        return redirect('property_detail', pk=property.id)
+    
+    # Check the number of existing images
+    if property.images.count() >= 3:
+        messages.error(request, "You cannot add more than 3 images to this property.")
+        return redirect('property_detail', pk=property.id)
+    
+    if request.method == 'POST':
+        form = PropertyImageForm(request.POST, request.FILES)
+        if form.is_valid():
+            image = form.save(commit=False)
+            image.property = property
+            image.save()
+            messages.success(request, "Image added successfully.")
+            return redirect('property_detail', pk=property.id)
+    else:
+        form = PropertyImageForm()
+    
+    return render(request, 'properties/add_property_image.html', {
+        'form': form,
+        'property': property
+    })

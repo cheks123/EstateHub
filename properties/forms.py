@@ -1,5 +1,5 @@
 from django import forms
-from .models import Property, PropertyImage, Comment
+from .models import Property, PropertyImage, Comment, Message
 from django.forms import inlineformset_factory
 from django.forms import  BaseInlineFormSet
 
@@ -13,7 +13,7 @@ class PropertyImageForm(forms.ModelForm):
 class PropertyForm(forms.ModelForm):
     class Meta:
         model = Property
-        fields = ['title', 'description', 'location', 'price']
+        fields = ['title', 'property_type','description', 'location', 'price']
 
 
 
@@ -57,6 +57,18 @@ PropertyImageFormSet = inlineformset_factory(
 
 
 
+
+
+class MessageForm(forms.ModelForm):
+    content = forms.CharField(widget=forms.Textarea(attrs={
+        'class': 'form-control',
+        'placeholder': 'Write your message here...',
+        'rows': 3
+    }))
+
+    class Meta:
+        model = Message
+        fields = ['content']
 
 
 

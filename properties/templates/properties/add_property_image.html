@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Add Image for {{ property.title }}</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Add Image</button>
+  </form>
+  <a href="{% url 'property_detail' pk=property.id %}">Cancel</a>
+{% endblock %}

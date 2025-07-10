@@ -2,6 +2,8 @@
 {% load static %}
 {% load widget_tweaks %}
 
+
+
 {% block content %}
   <h2>Edit Property</h2>
 
@@ -18,10 +20,6 @@
     <div class="alert alert-danger">There are errors in the property details form.</div>
   {% endif %}
 
-  {% if formset.errors %}
-    <div class="alert alert-danger">There are errors in the image form(s).</div>
-  {% endif %}
-
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
 
@@ -31,64 +29,12 @@
     <h4 class="mt-4">Property Images</h4>
     {{ formset.management_form }}
 
-    <div class="row">
-
-      {% for image_form in formset %}
-        <div class="col-md-4 mb-3">
-            {% if image_form.instance.image %}
-            <img src="{{ image_form.instance.image.url }}" class="img-fluid mb-2 preview-img" style="height:150px; object-fit:cover;">
-            {% endif %}
-
-            {{ image_form.image.label_tag }}
-            {{ image_form.image|add_class:"image-input" }}  <!-- Apply class for JS -->
-
-            {{ image_form.DELETE }} Delete
-            <div class="preview-container mt-2"></div>  <!-- Placeholder for new preview -->
-        </div>
-    {% endfor %}
-    </div>
-
     <button type="submit" class="btn btn-primary mt-3">Update Property</button>
   </form>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const fileInputs = document.querySelectorAll('.image-input');
 
-    fileInputs.forEach(input => {
-      input.addEventListener('change', function (event) {
-        const file = event.target.files[0];
-        const container = input.closest('.mb-3').querySelector('.preview-container');
 
-        if (file && file.type.startsWith("image/")) {
-          const reader = new FileReader();
 
-          reader.onload = function (e) {
-            container.innerHTML = `<img src="${e.target.result}" class="img-fluid border mt-2" style="height: 150px; object-fit: cover;">`;
-          };
 
-          reader.readAsDataURL(file);
-        } else {
-          container.innerHTML = "";
-        }
-      });
-    });
-  });
-</script>
-{% endblock %}
 
-{% block extra_css %}
-<style>
-  .preview-img {
-    display: block;
-    margin-bottom: 10px;
-  }
-  .preview-container img {
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    max-width: 100%;
-  }
-</style>
-{% endblock %}

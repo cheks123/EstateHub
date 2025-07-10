@@ -10,4 +10,8 @@ urlpatterns = [
     path('comment/<int:pk>/delete/', views.delete_comment, name='delete_comment'),
     path('property/<int:pk>/edit/', views.edit_property, name='edit_property'),
     path('property/<int:pk>/delete/', views.delete_property, name='delete_property'),
+    # From Grok
+    path('image/<int:image_id>/delete/', views.delete_property_image, name='delete_property_image'),
+    path('image/<int:image_id>/update/', views.update_property_image, name='update_property_image'),
+    path('<int:pk>/add-image/', views.add_property_image, name='add_property_image'),
 ]
